@@ -5,6 +5,7 @@ from model import PasswordCrackingModel
 from environment import PasswordCrackingEnv
 import torch.nn as nn
 from wordlist_loader import load_wordlist
+from tqdm import tqdm  # Import tqdm for the progress bar
 
 # Check if GPU is available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -21,8 +22,8 @@ def train_model(target_password, char_space, wordlist_path, num_episodes=1000):
     # Load wordlist for training
     wordlist = load_wordlist(wordlist_path)
 
-    # Training loop
-    for episode in range(num_episodes):
+    # Training loop with a progress bar
+    for episode in tqdm(range(num_episodes), desc="Training Progress", ncols=100):
         # Pick a random password from the wordlist to crack
         target_password = np.random.choice(wordlist)
 
@@ -54,7 +55,8 @@ def train_model(target_password, char_space, wordlist_path, num_episodes=1000):
             total_reward += reward
             state = next_state
         
-        print(f"Episode {episode + 1}, Total Reward: {total_reward}")
+        # Update the progress bar with the total reward for the current episode
+        tqdm.write(f"Episode {episode + 1}, Total Reward: {total_reward}")
         
     # Save the trained model
     torch.save(model.state_dict(), "password_cracking_model.pth")
