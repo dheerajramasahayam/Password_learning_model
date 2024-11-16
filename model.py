@@ -4,7 +4,7 @@ import torch.nn as nn
 class PasswordCrackingModel(nn.Module):
     def __init__(self, input_size, output_size):
         super(PasswordCrackingModel, self).__init__()
-        self.fc1 = nn.Linear(input_size, 128)
+        self.fc1 = nn.Linear(input_size, 128)  # input_size should match the length of the target password
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, output_size)
         self.softmax = nn.Softmax(dim=1)

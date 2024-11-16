@@ -5,12 +5,12 @@ from model import PasswordCrackingModel
 from environment import PasswordCrackingEnv
 import torch.nn as nn
 from wordlist_loader import load_wordlist
-from tqdm import tqdm  # Import tqdm for the progress bar
+from tqdm import tqdm
 
-# Check if GPU is available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def train_model(target_password, char_space, wordlist_path, num_episodes=1000):
+    # Define input_size based on the target password length
     input_size = len(target_password)
     output_size = len(char_space)
     
@@ -19,21 +19,20 @@ def train_model(target_password, char_space, wordlist_path, num_episodes=1000):
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     loss_fn = nn.CrossEntropyLoss()
 
-    # Load wordlist for training
     wordlist = load_wordlist(wordlist_path)
 
-    # Training loop with a progress bar
     for episode in tqdm(range(num_episodes), desc="Training Progress", ncols=100):
-        # Pick a random password from the wordlist to crack
-        target_password = np.random.choice(wordlist)
-
+        # Select a random password from the wordlist
+        target_password = np.random.choice(wordlist).strip()
+        input_size = len(target_password)  # Update input_size based on the new target password
+        
         env = PasswordCrackingEnv(target_password, char_space)
         state = env.reset()
         
         total_reward = 0
         done = False
         while not done:
-            # Convert state to tensor and move to GPU
+            # Convert state (string) to a tensor, with the right shape
             state_tensor = torch.tensor([ord(c) for c in state], dtype=torch.float32).unsqueeze(0).to(device)
             
             # Get model action probabilities
@@ -43,11 +42,10 @@ def train_model(target_password, char_space, wordlist_path, num_episodes=1000):
             # Take action in the environment
             next_state, reward, done, _ = env.step(action)
             
-            # Compute loss
+            # Compute loss and backpropagate
             reward_tensor = torch.tensor([reward], dtype=torch.float32).to(device)
             loss = loss_fn(action_probs, reward_tensor)
             
-            # Backpropagate
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -55,8 +53,6 @@ def train_model(target_password, char_space, wordlist_path, num_episodes=1000):
             total_reward += reward
             state = next_state
         
-        # Update the progress bar with the total reward for the current episode
         tqdm.write(f"Episode {episode + 1}, Total Reward: {total_reward}")
         
-    # Save the trained model
     torch.save(model.state_dict(), "password_cracking_model.pth")

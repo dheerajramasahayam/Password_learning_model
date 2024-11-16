@@ -1,42 +1,34 @@
-import gym
-import numpy as np
+import random
 
-class PasswordCrackingEnv(gym.Env):
+class PasswordCrackingEnv:
     def __init__(self, target_password, char_space):
-        super(PasswordCrackingEnv, self).__init__()
         self.target_password = target_password
         self.char_space = char_space
+        self.state = ""
         self.max_length = len(target_password)
-        self.current_guess = ['_'] * self.max_length
-        self.done = False
-        self.reward = 0
-        
-        # Action space: One of the characters in the character space
-        self.action_space = gym.spaces.Discrete(len(char_space))
-        
-        # Observation space: the current guess
-        self.observation_space = gym.spaces.Discrete(len(char_space)**self.max_length)
-        
+        self.current_length = 0
+    
     def reset(self):
-        self.current_guess = ['_'] * self.max_length
-        self.done = False
-        return ''.join(self.current_guess)
+        self.state = ""
+        self.current_length = 0
+        return self.state
     
     def step(self, action):
-        if self.done:
-            return ''.join(self.current_guess), self.reward, self.done, {}
+        # Append the character at the action position
+        next_char = self.char_space[action]
+        self.state += next_char
+        self.current_length += 1
         
-        # Map action to character
-        guess_char = self.char_space[action]
-        self.current_guess = self.current_guess[:action] + [guess_char] + self.current_guess[action+1:]
+        # Calculate reward based on how close the guess is to the target password
+        reward = 0
+        if self.state == self.target_password:
+            reward = 1  # Successfully cracked the password
+            done = True
+        elif self.state == self.target_password[:self.current_length]:
+            reward = 0.1  # Progress is being made
+            done = False
+        else:
+            reward = -0.1  # Wrong progress
+            done = False
         
-        # Reward is given if the character matches the target password
-        correct_char = self.target_password[action]
-        self.reward = 1 if guess_char == correct_char else -1
-        
-        # Check if the password is fully guessed
-        if ''.join(self.current_guess) == self.target_password:
-            self.done = True
-            self.reward = 10  # Give a large reward for full guess
-        
-        return ''.join(self.current_guess), self.reward, self.done, {}
+        return self.state, reward, done, {}
