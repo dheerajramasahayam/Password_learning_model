@@ -14,7 +14,7 @@ def train_model(target_password, char_space, wordlist_path, num_episodes=1000):
     input_size = len(target_password)
     output_size = len(char_space)
     
-    # Move model to GPU if available
+    # Initialize the model
     model = PasswordCrackingModel(input_size, output_size).to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     loss_fn = nn.CrossEntropyLoss()
@@ -28,13 +28,24 @@ def train_model(target_password, char_space, wordlist_path, num_episodes=1000):
         
         env = PasswordCrackingEnv(target_password, char_space)
         state = env.reset()
+
+        # Debugging: print the initial state
+        print(f"Initial state: {state}")
         
         total_reward = 0
         done = False
         while not done:
-            # Convert state (string) to a tensor, with the right shape
-            state_tensor = torch.tensor([ord(c) for c in state], dtype=torch.float32).unsqueeze(0).to(device)
+            # Ensure that the state is never empty
+            if not state:
+                print("Empty state detected! Resetting...")
+                state = env.reset()
             
+            # Convert state (string) to a tensor with the correct shape
+            state_tensor = torch.tensor([ord(c) for c in state], dtype=torch.float32).unsqueeze(0).to(device)
+
+            # Debugging: check tensor shape
+            print(f"State tensor shape: {state_tensor.shape}")
+
             # Get model action probabilities
             action_probs = model(state_tensor)
             action = torch.multinomial(action_probs, 1).item()

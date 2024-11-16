@@ -1,15 +1,12 @@
+import torch
+import numpy as np
 from trainer import train_model
 
-# Define the character space (can be extended to more characters if needed)
-char_space = list("abcdefghijklmnopqrstuvwxyz0123456789")  # Lowercase + numbers
+if __name__ == "__main__":
+    # Define your target password, character space, and wordlist path
+    target_password = "examplepassword"  # Example password, replace with your target password
+    char_space = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"  # Example char space
+    wordlist_path = "path/to/your/wordlist.txt"  # Replace with actual path to your wordlist
 
-# Path to your wordlist (e.g., rockyou.txt)
-wordlist_path = "rockyou.txt"  # Change this to the path of your wordlist file
-
-# Select a random password from the wordlist as target_password
-import random
-wordlist = open(wordlist_path, 'r', encoding='utf-8', errors='ignore').readlines()
-target_password = random.choice(wordlist).strip()
-
-# Train the model
-train_model(target_password=target_password, char_space=char_space, wordlist_path=wordlist_path)
+    # Start training the model
+    train_model(target_password=target_password, char_space=char_space, wordlist_path=wordlist_path)
